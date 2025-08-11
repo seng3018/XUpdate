@@ -1,0 +1,68 @@
+# PostgreSQL UFW 防火墙保护 - 直接执行命令
+# 复制以下命令到您的服务器终端执行
+
+# ============================================
+# 🚨 重要：执行前确保您有SSH或控制台访问权限！
+# ============================================
+
+# 1. 允许SSH（防止被锁定）
+sudo ufw allow ssh
+sudo ufw allow 22/tcp
+
+# 2. 允许本地回环接口
+sudo ufw allow in on lo
+sudo ufw allow out on lo
+
+# 3. PostgreSQL端口 5432 安全配置
+sudo ufw allow from 127.0.0.1 to any port 5432 proto tcp comment "PostgreSQL local access"
+sudo ufw allow from ::1 to any port 5432 proto tcp comment "PostgreSQL local IPv6 access"
+sudo ufw allow from 172.17.0.0/16 to any port 5432 proto tcp comment "PostgreSQL Docker bridge"
+sudo ufw allow from 172.18.0.0/16 to any port 5432 proto tcp comment "PostgreSQL Docker compose"
+sudo ufw deny 5432/tcp comment "Block external PostgreSQL access"
+
+# 4. PostgreSQL端口 15432 安全配置
+sudo ufw allow from 127.0.0.1 to any port 15432 proto tcp comment "PostgreSQL local access port 15432"
+sudo ufw allow from ::1 to any port 15432 proto tcp comment "PostgreSQL local IPv6 access port 15432"
+sudo ufw allow from 172.17.0.0/16 to any port 15432 proto tcp comment "PostgreSQL Docker bridge port 15432"
+sudo ufw allow from 172.18.0.0/16 to any port 15432 proto tcp comment "PostgreSQL Docker compose port 15432"
+sudo ufw deny 15432/tcp comment "Block external access to PostgreSQL port 15432"
+
+# 5. PostgreSQL端口 16430 安全配置
+sudo ufw allow from 127.0.0.1 to any port 16430 proto tcp comment "PostgreSQL local access port 16430"
+sudo ufw allow from ::1 to any port 16430 proto tcp comment "PostgreSQL local IPv6 access port 16430"
+sudo ufw allow from 172.17.0.0/16 to any port 16430 proto tcp comment "PostgreSQL Docker bridge port 16430"
+sudo ufw allow from 172.18.0.0/16 to any port 16430 proto tcp comment "PostgreSQL Docker compose port 16430"
+sudo ufw deny 16430/tcp comment "Block external access to PostgreSQL port 16430"
+
+# 6. 设置默认策略
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# 7. 启用防火墙
+sudo ufw --force enable
+
+# 8. 查看配置结果
+sudo ufw status verbose
+
+# ============================================
+# 🎯 配置完成后的效果：
+# ✅ PostgreSQL端口只能本地访问
+# ✅ 外部扫描无法发现PostgreSQL服务
+# ✅ 阻止所有CVE攻击尝试
+# ✅ Spring Boot应用正常连接数据库
+# ============================================
+
+# 测试命令：
+# 本地连接测试（应该成功）：
+# telnet 127.0.0.1 5432
+# telnet 127.0.0.1 15432
+# telnet 127.0.0.1 16430
+
+# 外部连接测试（应该被拒绝，从其他机器执行）：
+# telnet [您的服务器IP] 5432
+
+# 紧急恢复命令（如果遇到问题）：
+# sudo ufw disable
+
+# 查看防火墙日志：
+# sudo tail -f /var/log/ufw.log
